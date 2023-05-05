@@ -4,11 +4,11 @@
 // https://webkit.org/blog/7929/designing-websites-for-iphone-x/
 // ==========================================================================
 
-import browser from './utils/browser';
-import { closest, getElements, hasClass, toggleClass } from './utils/elements';
-import { on, triggerEvent } from './utils/events';
-import is from './utils/is';
-import { silencePromise } from './utils/promise';
+import browser from "./utils/browser";
+import { closest, getElements, hasClass, toggleClass } from "./utils/elements";
+import { on, triggerEvent } from "./utils/events";
+import is from "./utils/is";
+import { silencePromise } from "./utils/promise";
 
 class Fullscreen {
   constructor(player) {
@@ -23,7 +23,7 @@ class Fullscreen {
     this.scrollPosition = { x: 0, y: 0 };
 
     // Force the use of 'full window/browser' rather than fullscreen
-    this.forceFallback = player.config.fullscreen.fallback === 'force';
+    this.forceFallback = player.config.fullscreen.fallback === "force";
 
     // Get the fullscreen element
     // Checks container is an ancestor, defaults to null
@@ -35,25 +35,18 @@ class Fullscreen {
     on.call(
       this.player,
       document,
-      this.prefix === 'ms' ? 'MSFullscreenChange' : `${this.prefix}fullscreenchange`,
+      this.prefix === "ms" ? "MSFullscreenChange" : `${this.prefix}fullscreenchange`,
       () => {
         // TODO: Filter for target??
         this.onChange();
-      },
+      }
     );
 
     // Fullscreen toggle on double click
-    on.call(this.player, this.player.elements.container, 'dblclick', (event) => {
-      // Ignore double click in controls
-      if (is.element(this.player.elements.controls) && this.player.elements.controls.contains(event.target)) {
-        return;
-      }
-
-      this.player.listeners.proxy(event, this.toggle, 'fullscreen');
-    });
+    on.call(this.player, this.player.elements.container, "dblclick", this.doubleClick);
 
     // Tap focus when in fullscreen
-    on.call(this, this.player.elements.container, 'keydown', (event) => this.trapFocus(event));
+    on.call(this, this.player.elements.container, "keydown", (event) => this.trapFocus(event));
 
     // Update the UI
     this.update();
@@ -77,11 +70,11 @@ class Fullscreen {
   // Get the prefix for handlers
   static get prefix() {
     // No prefix
-    if (is.function(document.exitFullscreen)) return '';
+    if (is.function(document.exitFullscreen)) return "";
 
     // Check for fullscreen support by vendor prefix
-    let value = '';
-    const prefixes = ['webkit', 'moz', 'ms'];
+    let value = "";
+    const prefixes = ["webkit", "moz", "ms"];
 
     prefixes.some((pre) => {
       if (is.function(document[`${pre}ExitFullscreen`]) || is.function(document[`${pre}CancelFullScreen`])) {
@@ -96,7 +89,7 @@ class Fullscreen {
   }
 
   static get property() {
-    return this.prefix === 'moz' ? 'FullScreen' : 'Fullscreen';
+    return this.prefix === "moz" ? "FullScreen" : "Fullscreen";
   }
 
   // Determine if fullscreen is supported
@@ -111,9 +104,9 @@ class Fullscreen {
       // YouTube has no way to trigger fullscreen, so on devices with no native support, playsinline
       // must be enabled and iosNative fullscreen must be disabled to offer the fullscreen fallback
       !this.player.isYouTube ||
-        Fullscreen.nativeSupported ||
-        !browser.isIos ||
-        (this.player.config.playsinline && !this.player.config.fullscreen.iosNative),
+      Fullscreen.nativeSupported ||
+      !browser.isIos ||
+      (this.player.config.playsinline && !this.player.config.fullscreen.iosNative)
     ].every(Boolean);
   }
 
@@ -152,7 +145,7 @@ class Fullscreen {
     // Always trigger events on the plyr / media element (not a fullscreen container) and let them bubble up
     const target = this.target === this.player.media ? this.target : this.player.elements.container;
     // Trigger an event
-    triggerEvent.call(this.player, target, this.active ? 'enterfullscreen' : 'exitfullscreen', true);
+    triggerEvent.call(this.player, target, this.active ? "enterfullscreen" : "exitfullscreen", true);
   };
 
   toggleFallback = (toggle = false) => {
@@ -160,27 +153,27 @@ class Fullscreen {
     if (toggle) {
       this.scrollPosition = {
         x: window.scrollX ?? 0,
-        y: window.scrollY ?? 0,
+        y: window.scrollY ?? 0
       };
     } else {
       window.scrollTo(this.scrollPosition.x, this.scrollPosition.y);
     }
 
     // Toggle scroll
-    document.body.style.overflow = toggle ? 'hidden' : '';
+    document.body.style.overflow = toggle ? "hidden" : "";
 
     // Toggle class hook
     toggleClass(this.target, this.player.config.classNames.fullscreen.fallback, toggle);
 
     // Force full viewport on iPhone X+
     if (browser.isIos) {
-      let viewport = document.head.querySelector('meta[name="viewport"]');
-      const property = 'viewport-fit=cover';
+      let viewport = document.head.querySelector("meta[name=\"viewport\"]");
+      const property = "viewport-fit=cover";
 
       // Inject the viewport meta if required
       if (!viewport) {
-        viewport = document.createElement('meta');
-        viewport.setAttribute('name', 'viewport');
+        viewport = document.createElement("meta");
+        viewport.setAttribute("name", "viewport");
       }
 
       // Check if the property already exists
@@ -191,9 +184,9 @@ class Fullscreen {
         if (!hasProperty) viewport.content += `,${property}`;
       } else if (this.cleanupViewport) {
         viewport.content = viewport.content
-          .split(',')
+          .split(",")
           .filter((part) => part.trim() !== property)
-          .join(',');
+          .join(",");
       }
     }
 
@@ -204,11 +197,11 @@ class Fullscreen {
   // Trap focus inside container
   trapFocus = (event) => {
     // Bail if iOS/iPadOS, not active, not the tab key
-    if (browser.isIos || browser.isIPadOS || !this.active || event.key !== 'Tab') return;
+    if (browser.isIos || browser.isIPadOS || !this.active || event.key !== "Tab") return;
 
     // Get the current focused element
     const focused = document.activeElement;
-    const focusable = getElements.call(this.player, 'a[href], button:not(:disabled), input:not(:disabled), [tabindex]');
+    const focusable = getElements.call(this.player, "a[href], button:not(:disabled), input:not(:disabled), [tabindex]");
     const [first] = focusable;
     const last = focusable[focusable.length - 1];
 
@@ -228,13 +221,13 @@ class Fullscreen {
     if (this.supported) {
       let mode;
 
-      if (this.forceFallback) mode = 'Fallback (forced)';
-      else if (Fullscreen.nativeSupported) mode = 'Native';
-      else mode = 'Fallback';
+      if (this.forceFallback) mode = "Fallback (forced)";
+      else if (Fullscreen.nativeSupported) mode = "Native";
+      else mode = "Fallback";
 
       this.player.debug.log(`${mode} fullscreen enabled`);
     } else {
-      this.player.debug.log('Fullscreen not supported and fallback disabled');
+      this.player.debug.log("Fullscreen not supported and fallback disabled");
     }
 
     // Add styling hook to show button
@@ -255,7 +248,7 @@ class Fullscreen {
     } else if (!Fullscreen.nativeSupported || this.forceFallback) {
       this.toggleFallback(true);
     } else if (!this.prefix) {
-      this.target.requestFullscreen({ navigationUI: 'hide' });
+      this.target.requestFullscreen({ navigationUI: "hide" });
     } else if (!is.empty(this.prefix)) {
       this.target[`${this.prefix}Request${this.property}`]();
     }
@@ -278,7 +271,7 @@ class Fullscreen {
     } else if (!this.prefix) {
       (document.cancelFullScreen || document.exitFullscreen).call(document);
     } else if (!is.empty(this.prefix)) {
-      const action = this.prefix === 'moz' ? 'Cancel' : 'Exit';
+      const action = this.prefix === "moz" ? "Cancel" : "Exit";
       document[`${this.prefix}${action}${this.property}`]();
     }
   };
@@ -287,6 +280,27 @@ class Fullscreen {
   toggle = () => {
     if (!this.active) this.enter();
     else this.exit();
+  };
+
+  /**
+   * Handle double click event
+   * @param {MouseEvent} event
+   */
+  doubleClick = (event) => {
+    // Ignore double click in controls
+    if (is.element(this.player.elements.controls) && this.player.elements.controls.contains(event.target)) {
+      return;
+    }
+
+    if (this.player.touch) {
+      const boxWidth = event.target.clientWidth;
+      const posX = event.layerX;
+      const isInFirstHalf = posX < (boxWidth / 2);
+      isInFirstHalf ? this.player.rewind() : this.player.forward();
+      return;
+    }
+
+    this.player.listeners.proxy(event, this.toggle, "fullscreen");
   };
 }
 
